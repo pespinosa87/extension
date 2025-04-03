@@ -61,8 +61,8 @@ def agregar_medios_iniciales():
         'mensaje': f'Proceso completado. Medios agregados: {medios_agregados}, ya existentes: {medios_existentes}'
     }), 200
 
-@api_bp.route('/temas', methods=['GET'])
-def obtener_temas_flexibles():
+@api_bp.route('/temas', methods=['GET'], endpoint='temas_listado')
+def obtener_temas():
     dominio = request.args.get('dominio')
     tipo_medio = request.args.get('tipo', 'todos')
 

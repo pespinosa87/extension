@@ -129,6 +129,7 @@ def get_temas_por_dominio(dominio):
     JOIN medios m ON t.medio_id = m.id
     ORDER BY t.ultima_vez DESC
     """
+
     cursor.execute(query)
     rows = cursor.fetchall()
     conn.close()
@@ -142,22 +143,28 @@ def get_temas_por_dominio(dominio):
         hostname = hostname.replace("www.", "").lower()
 
         if dominio not in hostname:
-            continue  # Saltar si el dominio no coincide
+            continue  # Saltar si no coincide
 
         primera_vez = row['primera_vez']
         duracion_horas = (ahora - primera_vez).total_seconds() / 3600
 
+        # Determinar color y estado
         if duracion_horas < 4:
+            estado = "verde"
             color = "#4caf50"
         elif duracion_horas < 24:
+            estado = "amarillo"
             color = "#ffc107"
         else:
+            estado = "rojo"
             color = "#f44336"
 
         temas.append({
             "text": row['nombre'],
             "href": row['url'],
-            "color": color
+            "color": color,
+            "estado": estado,
+            "duracion_horas": round(duracion_horas, 1)
         })
 
     return temas
