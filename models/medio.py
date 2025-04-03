@@ -16,20 +16,22 @@ def get_all_medios():
     return medios
 
 def add_medio(nombre, url, tipo):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO medios (nombre, url, tipo) VALUES (?, ?, ?)",
+            "INSERT INTO medios (nombre, url, tipo) VALUES (%s, %s, %s)",
             (nombre, url, tipo)
         )
         conn.commit()
-        medio_id = cursor.lastrowid
         conn.close()
-        return {'id': medio_id, 'mensaje': 'Medio agregado correctamente'}, 201
-    except sqlite3.IntegrityError:
+        return {"mensaje": "Medio agregado correctamente"}, 201
+    except psycopg2.IntegrityError:
+        conn.rollback()
         conn.close()
-        return {'error': 'El medio ya existe'}, 409
+        return {"mensaje": "El medio ya existe"}, 409
+    except Exception as e:
+        return {"mensaje": f"Error inesperado: {str(e)}"}, 500
 
 def get_medio_stats():
     conn = get_db_connection()
