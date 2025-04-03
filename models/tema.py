@@ -64,7 +64,7 @@ def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     if condiciones:
         query += " WHERE " + " AND ".join(condiciones)
 
-    query += " ORDER BY t.ultima_vez DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY t.ultima_vez DESC LIMIT %s OFFSET %s"
     params.extend([limit, offset])
 
     cursor.execute(query, params)
