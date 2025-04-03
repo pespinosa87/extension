@@ -7,32 +7,29 @@ def get_db_connection():
     conn = psycopg2.connect(Config.DATABASE)
     return conn
 
-
 def add_or_update_tema(medio_id, nombre, url, primera_vez=None, ultima_vez=None):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    
     # Verificar si el tema ya existe
     cursor.execute(
-        "SELECT id, primera_vez FROM temas WHERE medio_id = ? AND nombre = ? AND url = ?",
+        "SELECT id, primera_vez FROM temas WHERE medio_id = %s AND nombre = %s AND url = %s",
         (medio_id, nombre, url)
     )
     tema_existente = cursor.fetchone()
     
-    now = ultima_vez or datetime.datetime.now().isoformat()
-    
+    now = ultima_vez or datetime.datetime.now()
+
     if tema_existente:
         # Actualizar tema existente
         cursor.execute(
-            "UPDATE temas SET ultima_vez = ? WHERE id = ?",
+            "UPDATE temas SET ultima_vez = %s WHERE id = %s",
             (now, tema_existente['id'])
         )
     else:
-        # Nuevo tema
         primera_vez = primera_vez or now
         cursor.execute(
-            "INSERT INTO temas (medio_id, nombre, url, primera_vez, ultima_vez) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO temas (medio_id, nombre, url, primera_vez, ultima_vez) VALUES (%s, %s, %s, %s, %s)",
             (medio_id, nombre, url, primera_vez, now)
         )
     
@@ -41,7 +38,7 @@ def add_or_update_tema(medio_id, nombre, url, primera_vez=None, ultima_vez=None)
 
 def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     query = """
     SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez, 
@@ -54,11 +51,11 @@ def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     params = []
 
     if tipo_medio != 'todos':
-        condiciones.append("m.tipo = ?")
+        condiciones.append("m.tipo = %s")
         params.append(tipo_medio)
     
     if medio_id:
-        condiciones.append("m.id = ?")
+        condiciones.append("m.id = %s")
         params.append(medio_id)
 
     if condiciones:
@@ -72,8 +69,8 @@ def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     
     temas = []
     for row in rows:
-        primera_vez = datetime.datetime.fromisoformat(row['primera_vez'])
-        ultima_vez = datetime.datetime.fromisoformat(row['ultima_vez'])
+        primera_vez = row['primera_vez']
+        ultima_vez = row['ultima_vez']
         ahora = datetime.datetime.now()
         
         duracion_horas = (ahora - primera_vez).total_seconds() / 3600
@@ -105,7 +102,6 @@ def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     
     conn.close()
     return temas
-
 
 def get_tema_stats():
     conn = get_db_connection()
