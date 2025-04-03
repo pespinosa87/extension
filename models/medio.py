@@ -1,10 +1,10 @@
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from config import Config
 
 def get_db_connection():
-    conn = sqlite3.connect(Config.DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    conn = psycopg2.connect(Config.DATABASE)
+    return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 def init_db():
     conn = get_db_connection()
