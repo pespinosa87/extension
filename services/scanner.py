@@ -156,12 +156,6 @@ def agregar_medios_prensa():
     """Función para agregar los medios de prensa proporcionados"""
     # Lista completa de medios propios
     medios_propios = [
-        {"nombre": "ABC", "url": "https://www.abc.es/", "tipo": "propio"},
-        {"nombre": "20 Minutos", "url": "https://www.20minutos.es/", "tipo": "propio"},
-        {"nombre": "La Vanguardia", "url": "https://www.lavanguardia.com/", "tipo": "propio"},
-        {"nombre": "El País", "url": "https://elpais.com/", "tipo": "propio"},
-        {"nombre": "El Mundo", "url": "https://www.elmundo.es/", "tipo": "propio"},
-        {"nombre": "La Razón", "url": "https://www.larazon.es/", "tipo": "propio"},
         {"nombre": "Diari de Girona", "url": "https://www.diaridegirona.cat/", "tipo": "propio"},
         {"nombre": "Diario Córdoba", "url": "https://www.diariocordoba.com/", "tipo": "propio"},
         {"nombre": "Diario de Ibiza", "url": "https://www.diariodeibiza.es/", "tipo": "propio"},
