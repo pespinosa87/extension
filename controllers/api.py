@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from models.medio import get_all_medios, add_medio
 from models.tema import get_temas
 from services.scanner import escanear_medios_por_lotes as escanear_todos_los_medios, agregar_medios_prensa
+from threading import Thread
 
 
 api_bp = Blueprint('api', __name__)
@@ -27,12 +28,13 @@ def obtener_temas():
 
 @api_bp.route('/iniciar-escaneo', methods=['GET', 'POST'])
 def iniciar_escaneo_manual():
-    """Endpoint para iniciar un escaneo manual"""
-    try:
-        resultado = escanear_todos_los_medios()
-        return jsonify({'mensaje': 'Escaneo manual completado correctamente', 'resultado': resultado}), 200
-    except Exception as e:
-        return jsonify({'error': f'Error al iniciar escaneo: {str(e)}'}), 500
+    """Inicia escaneo manual en segundo plano"""
+    def run_background():
+        from services.scanner import escanear_medios_por_lotes
+        escanear_medios_por_lotes(lote_size=5)  # puedes dejar lote_size=5
+
+    Thread(target=run_background).start()
+    return jsonify({'mensaje': 'Escaneo manual iniciado en segundo plano'}), 202
 
 @api_bp.route('/agregar-medios-prensa', methods=['GET', 'POST'])
 def agregar_medios_prensa_endpoint():

@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import time
 import pytz
 import time
 import logging
@@ -147,13 +148,14 @@ def escanear_medios_por_lotes(lote_size=5):
                 print(f"✗ No se encontraron temas en {medio['nombre']}")
             
             medios_procesados += 1
+            time.sleep(1.5)
         
         # Pequeña pausa entre lotes para no sobrecargar recursos
         time.sleep(2)
     
     print(f"Escaneo completado a las {datetime.datetime.now()}")
     print(f"Resumen: {medios_procesados} medios procesados, {temas_encontrados} temas encontrados en total")
-    
+    time.sleep(2)
     return {
         "medios_procesados": medios_procesados,
         "temas_encontrados": temas_encontrados
