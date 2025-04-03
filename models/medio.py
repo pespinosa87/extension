@@ -4,34 +4,8 @@ from config import Config
 
 def get_db_connection():
     conn = psycopg2.connect(Config.DATABASE)
-    return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    return conn
 
-def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS medios (
-        id INTEGER PRIMARY KEY,
-        nombre TEXT UNIQUE,
-        url TEXT,
-        tipo TEXT  -- 'propio' o 'competencia'
-    )
-    ''')
-    
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS temas (
-        id INTEGER PRIMARY KEY,
-        medio_id INTEGER,
-        nombre TEXT,
-        url TEXT,
-        primera_vez TIMESTAMP,
-        ultima_vez TIMESTAMP,
-        FOREIGN KEY (medio_id) REFERENCES medios (id)
-    )
-    ''')
-    conn.commit()
-    conn.close()
 
 def get_all_medios():
     conn = get_db_connection()
@@ -43,7 +17,7 @@ def get_all_medios():
 
 def add_medio(nombre, url, tipo):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         cursor.execute(
             "INSERT INTO medios (nombre, url, tipo) VALUES (?, ?, ?)",
@@ -59,7 +33,7 @@ def add_medio(nombre, url, tipo):
 
 def get_medio_stats():
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     cursor.execute("SELECT COUNT(*) as total FROM medios")
     total_medios = cursor.fetchone()['total']

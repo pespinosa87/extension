@@ -4,13 +4,14 @@ import datetime
 from config import Config
 
 def get_db_connection():
-    conn = sqlite3.connect(Config.DATABASE)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(Config.DATABASE)
     return conn
+
 
 def add_or_update_tema(medio_id, nombre, url, primera_vez=None, ultima_vez=None):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
     
     # Verificar si el tema ya existe
     cursor.execute(
@@ -108,7 +109,7 @@ def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
 
 def get_tema_stats():
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     cursor.execute("SELECT COUNT(*) as total FROM temas")
     total_temas = cursor.fetchone()['total']
