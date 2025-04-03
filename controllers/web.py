@@ -33,6 +33,11 @@ def visualizar_temas():
         page=page
     )
 
+@web_bp.route('/visualizar')
+def visualizar_temas():
+    tipo = request.args.get('tipo', 'todos')  # propio, competencia, todos
+    temas = get_temas(tipo_medio=tipo)
+    return render_template('visualizar.html', temas=temas, filtro_tipo=tipo)
 
 @web_bp.route('/health')
 def health_check():
@@ -54,3 +59,4 @@ def health_check():
             'error': str(e),
             'database_path': Config.DATABASE
         }), 500
+    

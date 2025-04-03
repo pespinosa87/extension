@@ -169,5 +169,66 @@ def get_temas_por_dominio(dominio):
 
     return temas
 
+def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
+    query = """
+    SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez, 
+           m.nombre as medio_nombre, m.url as medio_url, m.tipo as medio_tipo, m.id as medio_id
+    FROM temas t
+    JOIN medios m ON t.medio_id = m.id
+    """
+
+    condiciones = []
+    params = []
+
+    if tipo_medio != 'todos':
+        condiciones.append("m.tipo = %s")
+        params.append(tipo_medio)
+
+    if medio_id:
+        condiciones.append("m.id = %s")
+        params.append(medio_id)
+
+    if condiciones:
+        query += " WHERE " + " AND ".join(condiciones)
+
+    query += " ORDER BY t.ultima_vez DESC LIMIT %s OFFSET %s"
+    params.extend([limit, offset])
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+
+    ahora = datetime.datetime.now()
+    temas = []
+    for row in rows:
+        primera_vez = row['primera_vez']
+        ultima_vez = row['ultima_vez']
+
+        duracion_horas = (ahora - primera_vez).total_seconds() / 3600
+
+        if duracion_horas < 4:
+            color = "#4caf50"
+        elif duracion_horas < 24:
+            color = "#ffc107"
+        else:
+            color = "#f44336"
+
+        temas.append({
+            'id': row['id'],
+            'nombre': row['nombre'],
+            'url': row['url'],
+            'primera_vez': primera_vez.strftime('%Y-%m-%d %H:%M:%S'),
+            'ultima_vez': ultima_vez.strftime('%Y-%m-%d %H:%M:%S'),
+            'medio_nombre': row['medio_nombre'],
+            'medio_url': row['medio_url'],
+            'medio_tipo': row['medio_tipo'],
+            'medio_id': row['medio_id'],
+            'duracion_horas': round(duracion_horas, 1),
+            'color': color
+        })
+
+    return temas
 

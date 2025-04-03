@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Competidores{% endblock %}
+
+{% block content %}
+<h2>Medios de la Competencia</h2>
+
+<form id="add-form">
+    <label>Nombre del medio:</label>
+    <input type="text" name="nombre" required>
+
+    <label>Dominio principal (ej: informacion.es):</label>
+    <input type="text" name="url" required>
+
+    <button type="submit">Añadir medio</button>
+</form>
+
+<hr>
+
+<h3>Listado actual:</h3>
+<ul id="lista-competidores">
+    <!-- Se rellenará por JS -->
+</ul>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("add-form");
+    const lista = document.getElementById("lista-competidores");
+
+    function cargarCompetidores() {
+        fetch("/api/medios?tipo=competencia")
+            .then(res => res.json())
+            .then(data => {
+                lista.innerHTML = "";
+                data.forEach(m => {
+                    const li = document.createElement("li");
+                    li.textContent = `${m.nombre} (${m.url})`;
+                    lista.appendChild(li);
+                });
+            });
+    }
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nombre = form.nombre.value;
+        const url = form.url.value;
+
+        fetch("/api/medios", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, url, tipo: "competencia" })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.mensaje || "Medio agregado");
+            form.reset();
+            cargarCompetidores();
+        });
+    });
+
+    cargarCompetidores();
+});
+</script>
+{% endblock %}

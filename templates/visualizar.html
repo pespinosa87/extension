@@ -5,99 +5,117 @@
 {% block header_description %}Visualización de temas destacados en medios digitales{% endblock %}
 
 {% block content %}
-    <div class="stats">
-        <div class="stat-card">
-            <h3>Medios monitoreados</h3>
-            <div class="number">{{ medios_stats.total }}</div>
-            <div>Propios: {{ medios_stats.propios }}</div>
-            <div>Competencia: {{ medios_stats.competencia }}</div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Temas encontrados</h3>
-            <div class="number">{{ temas_stats.total }}</div>
-            <div>Últimos 100 temas mostrados</div>
-        </div>
+<div class="stats">
+    <div class="stat-card">
+        <h3>Medios monitoreados</h3>
+        <div class="number">{{ medios_stats.total }}</div>
+        <div>Propios: {{ medios_stats.propios }}</div>
+        <div>Competencia: {{ medios_stats.competencia }}</div>
     </div>
-    
-    <div class="actions">
-        <button id="btnEscaneoManual">Iniciar escaneo manual</button>
-        <button id="btnCargarMedios">Cargar medios de prensa</button>
-        <button id="btnActualizar">Actualizar página</button>
+
+    <div class="stat-card">
+        <h3>Temas encontrados</h3>
+        <div class="number">{{ temas_stats.total }}</div>
+        <div>Últimos 100 temas mostrados</div>
     </div>
-    
-    <div class="refresh">
-        <h2>Temas monitoreados</h2>
-        <small>Última actualización: {{ timestamp }}</small>
-    </div>
-    <div style="margin: 20px 0;">
-        <label for="filtroMedio"><strong>Filtrar por medio:</strong></label>
-        <select id="filtroMedio">
-            <option value="">Todos</option>
-            {% for medio in medios %}
-                <option value="{{ medio.id }}" {% if medio_seleccionado == medio.id %}selected{% endif %}>
-                    {{ medio.nombre }}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Tema</th>
-                <th>Medio</th>
-                <th>Tipo</th>
-                <th>Tiempo</th>
-                <th>Estado</th>
-                <th>Última actualización</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if temas %}
-                {% for tema in temas %}
-                    <tr>
-                        <td>{{ tema.nombre }}</td>
-                        <td><a href="{{ tema.medio_url }}" target="_blank">{{ tema.medio_nombre }}</a></td>
-                        <td>{{ tema.medio_tipo }}</td>
-                        <td>{{ tema.duracion_horas }} horas</td>
-                        <td><span class="tema-tag tema-{{ tema.estado }}">{{ tema.estado|upper }}</span></td>
-                        <td>{{ tema.ultima_vez }}</td>
-                        <td><a href="{{ tema.url }}" target="_blank">Ver noticia</a></td>
-                    </tr>
-                {% endfor %}
-            {% else %}
+</div>
+
+<div class="actions">
+    <button id="btnEscaneoManual">Iniciar escaneo manual</button>
+    <button id="btnCargarMedios">Cargar medios de prensa</button>
+    <button id="btnActualizar">Actualizar página</button>
+</div>
+
+<div class="refresh">
+    <h2>Temas monitoreados</h2>
+    <small>Última actualización: {{ timestamp }}</small>
+</div>
+
+<div style="margin: 20px 0;">
+    <label for="filtroMedio"><strong>Filtrar por medio:</strong></label>
+    <select id="filtroMedio">
+        <option value="">Todos</option>
+        {% for medio in medios %}
+            <option value="{{ medio.id }}" {% if medio_seleccionado == medio.id %}selected{% endif %}>
+                {{ medio.nombre }}
+            </option>
+        {% endfor %}
+    </select>
+
+    &nbsp;&nbsp;&nbsp;
+
+    <label for="filtroTipo"><strong>Tipo de medio:</strong></label>
+    <select id="filtroTipo">
+        <option value="todos" {% if tipo_seleccionado == 'todos' %}selected{% endif %}>Todos</option>
+        <option value="propio" {% if tipo_seleccionado == 'propio' %}selected{% endif %}>Propios</option>
+        <option value="competencia" {% if tipo_seleccionado == 'competencia' %}selected{% endif %}>Competencia</option>
+    </select>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tema</th>
+            <th>Medio</th>
+            <th>Tipo</th>
+            <th>Tiempo</th>
+            <th>Estado</th>
+            <th>Última actualización</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if temas %}
+            {% for tema in temas %}
                 <tr>
-                    <td colspan="7" style="text-align: center;">No hay temas monitoreados aún. Inicia un escaneo manual o carga los medios de prensa.</td>
+                    <td>{{ tema.nombre }}</td>
+                    <td><a href="{{ tema.medio_url }}" target="_blank">{{ tema.medio_nombre }}</a></td>
+                    <td>{{ tema.medio_tipo }}</td>
+                    <td>{{ tema.duracion_horas }} horas</td>
+                    <td><span class="tema-tag tema-{{ tema.estado }}">{{ tema.estado|upper }}</span></td>
+                    <td>{{ tema.ultima_vez }}</td>
+                    <td><a href="{{ tema.url }}" target="_blank">Ver noticia</a></td>
                 </tr>
-            {% endif %}
-        </tbody>
-    </table>
-    <div style="margin-top: 20px; text-align: center;">
-        {% if page > 1 %}
-            <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, page=page-1) }}">← Anterior</a>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center;">No hay temas monitoreados aún.</td>
+            </tr>
         {% endif %}
-        <span style="margin: 0 10px;">Página {{ page }}</span>
-        {% if temas|length >= 20 %}
-            <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, page=page+1) }}">Siguiente →</a>
-        {% endif %}
-    </div>
-    
-    <script>
-        document.getElementById('btnCargarMedios').addEventListener('click', function() {
-            window.location.href = "{{ url_for('api.agregar_medios_prensa_endpoint') }}";
-        });
-        
-        document.getElementById('btnActualizar').addEventListener('click', function() {
-            window.location.href = "{{ url_for('web.visualizar_temas') }}";
-        });
-    </script>
-    <script>
-        document.getElementById('filtroMedio').addEventListener('change', function() {
-            const medioId = this.value;
-            window.location.href = medioId ? `?medio_id=${medioId}` : `?`;
-        });
-    </script>
-    
+    </tbody>
+</table>
+
+<div style="margin-top: 20px; text-align: center;">
+    {% if page > 1 %}
+        <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, tipo=tipo_seleccionado, page=page-1) }}">← Anterior</a>
+    {% endif %}
+    <span style="margin: 0 10px;">Página {{ page }}</span>
+    {% if temas|length >= 20 %}
+        <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, tipo=tipo_seleccionado, page=page+1) }}">Siguiente →</a>
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById('btnCargarMedios').addEventListener('click', function() {
+        window.location.href = "{{ url_for('api.agregar_medios_prensa_endpoint') }}";
+    });
+
+    document.getElementById('btnActualizar').addEventListener('click', function() {
+        location.reload();
+    });
+
+    document.getElementById('filtroMedio').addEventListener('change', actualizarFiltros);
+    document.getElementById('filtroTipo').addEventListener('change', actualizarFiltros);
+
+    function actualizarFiltros() {
+        const medioId = document.getElementById('filtroMedio').value;
+        const tipo = document.getElementById('filtroTipo').value;
+
+        let query = '?';
+        if (medioId) query += `medio_id=${medioId}&`;
+        if (tipo) query += `tipo=${tipo}`;
+        window.location.href = query;
+    }
+</script>
+
 {% endblock %}

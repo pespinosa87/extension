@@ -72,3 +72,11 @@ def obtener_temas():
         temas = get_temas(tipo_medio)
     
     return jsonify(temas)
+
+@api_bp.route('/medios', methods=['GET'])
+def listar_medios():
+    tipo = request.args.get('tipo')
+    medios = get_all_medios()
+    if tipo:
+        medios = [m for m in medios if m['tipo'] == tipo]
+    return jsonify(medios)
