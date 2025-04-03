@@ -112,3 +112,53 @@ def get_tema_stats():
     
     conn.close()
     return {'total': total_temas}
+def get_temas_por_dominio(dominio):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    print(f"[API] Buscando temas para dominio: {dominio}")
+
+    query = """
+    SELECT t.nombre, t.url, t.ultima_vez, t.primera_vez, 
+           t.id, t.medio_id, m.url as medio_url, m.nombre as medio_nombre,
+           m.tipo as medio_tipo
+    FROM temas t
+    JOIN medios m ON t.medio_id = m.id
+    WHERE m.url ILIKE %s OR m.url ILIKE %s OR m.url ILIKE %s
+    ORDER BY t.ultima_vez DESC
+    """
+
+    # Probar diferentes variantes para asegurar coincidencia
+    dominio_limpio = dominio.replace("www.", "")
+    variantes = [
+        f"%{dominio}%",                # informacion.es
+        f"%www.{dominio}%",            # www.informacion.es
+        f"%https://{dominio}%"         # https://www.informacion.es
+    ]
+
+    cursor.execute(query, variantes)
+    rows = cursor.fetchall()
+    conn.close()
+
+    ahora = datetime.datetime.now()
+
+    temas = []
+    for row in rows:
+        primera_vez = row['primera_vez']
+        duracion_horas = (ahora - primera_vez).total_seconds() / 3600
+
+        if duracion_horas < 4:
+            color = "#4caf50"
+        elif duracion_horas < 24:
+            color = "#ffc107"
+        else:
+            color = "#f44336"
+
+        temas.append({
+            "text": row['nombre'],
+            "href": row['url'],
+            "color": color
+        })
+
+    return temas
+

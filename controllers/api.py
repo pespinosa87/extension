@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.medio import get_all_medios, add_medio
-from models.tema import get_temas
+from models.tema import get_temas, get_temas_por_dominio
 from services.scanner import escanear_medios_por_lotes as escanear_todos_los_medios, agregar_medios_prensa
 from threading import Thread
 
@@ -66,3 +66,12 @@ def agregar_medios_iniciales():
     return jsonify({
         'mensaje': f'Proceso completado. Medios agregados: {medios_agregados}, ya existentes: {medios_existentes}'
     }), 200
+
+@api_bp.route('/temas', methods=['GET'])
+def obtener_temas_por_dominio():
+    dominio = request.args.get('dominio')
+    if not dominio:
+        return jsonify({"error": "Falta el parámetro 'dominio'"}), 400
+
+    temas = get_temas_por_dominio(dominio)
+    return jsonify({"temas": temas})
