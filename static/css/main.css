@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+header {
+    background-color: #4285f4;
+    color: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+h1, h2 {
+    margin: 0;
+}
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+.stat-card {
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    padding: 15px;
+    flex: 1;
+    min-width: 200px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.stat-card h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+.number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #4285f4;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+}
+tr:hover {
+    background-color: #f5f5f5;
+}
+.tema-tag {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+}
+.actions {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+}
+button {
+    padding: 10px 15px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #3b78e7;
+}
+.refresh {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.refresh small {
+    color: #666;
+}
+.endpoint {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f0f8ff;
+    border-left: 4px solid #3498db;
+}
+/* Clases para los estados de los temas */
+.tema-verde {
+    background-color: #4caf50;
+}
+
+.tema-amarillo {
+    background-color: #ffc107;
+    color: black; /* Para mejor contraste */
+}
+
+.tema-rojo {
+    background-color: #f44336;
+}

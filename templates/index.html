@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}API de Temas Digitales{% endblock %}
+
+{% block header_description %}API para el monitor de temas destacados en medios digitales{% endblock %}
+
+{% block content %}
+    <h2>Endpoints disponibles:</h2>
+    
+    <div class="endpoint">
+        <p><code>GET /health</code> - Verificar el estado de la aplicación</p>
+        <p>Ejemplo: <a href="{{ url_for('web.health_check') }}">{{ url_for('web.health_check') }}</a></p>
+    </div>
+    
+    <div class="endpoint">
+        <p><code>GET /api/medios</code> - Listar todos los medios registrados</p>
+        <p>Ejemplo: <a href="{{ url_for('api.listar_medios') }}">{{ url_for('api.listar_medios') }}</a></p>
+    </div>
+    
+    <div class="endpoint">
+        <p><code>GET /api/temas</code> - Obtener todos los temas</p>
+        <p>Ejemplo: <a href="{{ url_for('api.obtener_temas') }}">{{ url_for('api.obtener_temas') }}</a></p>
+    </div>
+    
+    <div class="endpoint">
+        <p><code>GET /api/temas?tipo=propio</code> - Filtrar temas por tipo de medio</p>
+        <p>Ejemplo: <a href="{{ url_for('api.obtener_temas') }}?tipo=propio">{{ url_for('api.obtener_temas') }}?tipo=propio</a></p>
+    </div>
+    
+    <div class="endpoint">
+        <p><code>GET /visualizar</code> - Ver una página con los temas monitoreados</p>
+        <p>Ejemplo: <a href="{{ url_for('web.visualizar_temas') }}">{{ url_for('web.visualizar_temas') }}</a></p>
+    </div>
+    
+    <h2>Uso con la extensión de Chrome:</h2>
+    <p>Esta API está diseñada para ser utilizada con la extensión de Chrome para monitorización de temas destacados.</p>
+    <p>Para configurar la extensión, utiliza la siguiente URL como base de la API:</p>
+    <code>{{ request.url_root }}api</code>
+    {% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Visualización de Temas Monitoreados{% endblock %}
+
+{% block header_description %}Visualización de temas destacados en medios digitales{% endblock %}
+
+{% block content %}
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Medios monitoreados</h3>
+            <div class="number">{{ medios_stats.total }}</div>
+            <div>Propios: {{ medios_stats.propios }}</div>
+            <div>Competencia: {{ medios_stats.competencia }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Temas encontrados</h3>
+            <div class="number">{{ temas_stats.total }}</div>
+            <div>Últimos 100 temas mostrados</div>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <button id="btnEscaneoManual">Iniciar escaneo manual</button>
+        <button id="btnCargarMedios">Cargar medios de prensa</button>
+        <button id="btnActualizar">Actualizar página</button>
+    </div>
+    
+    <div class="refresh">
+        <h2>Temas monitoreados</h2>
+        <small>Última actualización: {{ timestamp }}</small>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Tema</th>
+                <th>Medio</th>
+                <th>Tipo</th>
+                <th>Tiempo</th>
+                <th>Estado</th>
+                <th>Última actualización</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if temas %}
+                {% for tema in temas %}
+                    <tr>
+                        <td>{{ tema.nombre }}</td>
+                        <td><a href="{{ tema.medio_url }}" target="_blank">{{ tema.medio_nombre }}</a></td>
+                        <td>{{ tema.medio_tipo }}</td>
+                        <td>{{ tema.duracion_horas }} horas</td>
+                        <td><span class="tema-tag tema-{{ tema.estado }}">{{ tema.estado|upper }}</span></td>
+                        <td>{{ tema.ultima_vez }}</td>
+                        <td><a href="{{ tema.url }}" target="_blank">Ver noticia</a></td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No hay temas monitoreados aún. Inicia un escaneo manual o carga los medios de prensa.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('btnCargarMedios').addEventListener('click', function() {
+            window.location.href = "{{ url_for('api.agregar_medios_prensa_endpoint') }}";
+        });
+        
+        document.getElementById('btnActualizar').addEventListener('click', function() {
+            window.location.href = "{{ url_for('web.visualizar_temas') }}";
+        });
+    </script>
+{% endblock %}
