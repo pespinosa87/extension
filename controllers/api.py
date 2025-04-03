@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models.medio import get_all_medios, add_medio
 from models.tema import get_temas
-from services.scanner import escanear_todos_los_medios, agregar_medios_prensa
+from services.scanner import escanear_medios_por_lotes as escanear_todos_los_medios
 
 api_bp = Blueprint('api', __name__)
 
