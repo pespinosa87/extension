@@ -2,12 +2,16 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
+import pytz
 import requests
 from bs4 import BeautifulSoup
 import datetime
 import sqlite3
 import os
 import time
+
+scheduler = BackgroundScheduler(timezone=pytz.UTC)
+scheduler.add_job(escanear_todos_los_medios, 'interval', hours=1)
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para permitir solicitudes desde la extensión
