@@ -94,6 +94,13 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
         for elemento in temas_elementos:
             nombre = elemento.text.strip()
             url_tema = elemento.get('href', '')
+
+            if not url_tema:
+                 continue 
+            if not url_tema.startswith(('http://', 'https://')):
+                 base_url = '/'.join(url.split('/')[:3])
+                 url_tema = f"{base_url}{url_tema if url_tema.startswith('/') else '/' + url_tema}"
+
             
             # Si la URL es relativa, convertirla a absoluta
             if url_tema and not url_tema.startswith(('http://', 'https://')):
