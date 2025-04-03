@@ -1,23 +1,26 @@
 # app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from apscheduler.schedulers.background import BackgroundScheduler
-import pytz
 import requests
 from bs4 import BeautifulSoup
 import datetime
 import sqlite3
 import os
 import time
-
-scheduler = BackgroundScheduler(timezone=pytz.UTC)
-scheduler.add_job(escanear_todos_los_medios, 'interval', hours=1)
+import pytz
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para permitir solicitudes desde la extensión
 
 # Configuración de la base de datos
-DATABASE = "temas_medios.db"
+# Usar directorio persistente en Render
+import os
+# Render proporciona el directorio /var/data/ para almacenamiento persistente
+DATABASE_DIR = '/var/data' if os.path.exists('/var/data') else '.'
+os.makedirs(DATABASE_DIR, exist_ok=True)
+DATABASE = os.path.join(DATABASE_DIR, "temas_medios.db")
+print(f"Usando base de datos en: {DATABASE}")
 
 def init_db():
     conn = sqlite3.connect(DATABASE)
@@ -142,7 +145,7 @@ def escanear_todos_los_medios():
     print(f"Escaneo completado a las {datetime.datetime.now()}")
 
 # Configurar el programador para escanear cada hora
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(timezone=pytz.UTC)
 scheduler.add_job(escanear_todos_los_medios, 'interval', hours=1)
 
 # Rutas de la API
@@ -278,13 +281,51 @@ def agregar_medios_iniciales():
 @app.route('/health', methods=['GET'])
 def health_check():
     """Endpoint de verificación de salud para Render"""
-    return jsonify({'status': 'ok'}), 200
+    try:
+        # Verificar si la base de datos existe y tiene las tablas necesarias
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Comprobar tablas existentes
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        # Contar registros
+        medios_count = 0
+        temas_count = 0
+        if 'medios' in tables:
+            cursor.execute("SELECT COUNT(*) FROM medios")
+            medios_count = cursor.fetchone()[0]
+        if 'temas' in tables:
+            cursor.execute("SELECT COUNT(*) FROM temas")
+            temas_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'status': 'ok',
+            'database': {
+                'path': DATABASE,
+                'tables': tables,
+                'medios_count': medios_count,
+                'temas_count': temas_count
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'database_path': DATABASE
+        }), 500
 
-# Inicializar la base de datos y el programador al iniciar la aplicación
 @app.before_first_request
 def before_first_request():
+    print("Inicializando base de datos...")
     init_db()
+    print("Base de datos inicializada correctamente")
+    print("Iniciando programador de tareas...")
     scheduler.start()
+    print("Programador iniciado correctamente")
 
 # Para ejecución local
 if __name__ == '__main__':
