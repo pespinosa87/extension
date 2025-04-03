@@ -112,6 +112,9 @@ def get_tema_stats():
     
     conn.close()
     return {'total': total_temas}
+
+import urllib.parse
+
 def get_temas_por_dominio(dominio):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -120,25 +123,27 @@ def get_temas_por_dominio(dominio):
     print(f"[API] Filtrando temas por dominio: {dominio}")
 
     query = """
-    SELECT t.nombre, t.url, t.ultima_vez, t.primera_vez, 
-           t.id, t.medio_id, m.url as medio_url, m.nombre as medio_nombre,
-           m.tipo as medio_tipo
+    SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez,
+           m.nombre as medio_nombre, m.url as medio_url, m.tipo as medio_tipo, m.id as medio_id
     FROM temas t
     JOIN medios m ON t.medio_id = m.id
-    WHERE m.url ILIKE %s
     ORDER BY t.ultima_vez DESC
     """
-
-    # Buscar cualquier medio que contenga ese dominio
-    patron = f"%{dominio}%"
-    cursor.execute(query, (patron,))
+    cursor.execute(query)
     rows = cursor.fetchall()
     conn.close()
 
     ahora = datetime.datetime.now()
-
     temas = []
+
     for row in rows:
+        medio_url = row['medio_url']
+        hostname = urllib.parse.urlparse(medio_url).hostname or ""
+        hostname = hostname.replace("www.", "").lower()
+
+        if dominio not in hostname:
+            continue  # Saltar si el dominio no coincide
+
         primera_vez = row['primera_vez']
         duracion_horas = (ahora - primera_vez).total_seconds() / 3600
 
@@ -156,5 +161,6 @@ def get_temas_por_dominio(dominio):
         })
 
     return temas
+
 
 

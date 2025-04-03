@@ -20,12 +20,6 @@ def agregar_medio():
     
     return add_medio(data['nombre'], data['url'], data['tipo'])
 
-@api_bp.route('/temas', methods=['GET'])
-def obtener_temas():
-    tipo_medio = request.args.get('tipo', 'todos')
-    temas = get_temas(tipo_medio)
-    return jsonify(temas)
-
 @api_bp.route('/iniciar-escaneo', methods=['GET', 'POST'])
 def iniciar_escaneo_manual():
     """Inicia escaneo manual en segundo plano"""
@@ -68,10 +62,13 @@ def agregar_medios_iniciales():
     }), 200
 
 @api_bp.route('/temas', methods=['GET'])
-def obtener_temas_por_dominio():
+def obtener_temas_flexibles():
     dominio = request.args.get('dominio')
-    if not dominio:
-        return jsonify({"error": "Falta el parámetro 'dominio'"}), 400
+    tipo_medio = request.args.get('tipo', 'todos')
 
-    temas = get_temas_por_dominio(dominio)
-    return jsonify({"temas": temas})
+    if dominio:
+        temas = get_temas_por_dominio(dominio)
+    else:
+        temas = get_temas(tipo_medio)
+    
+    return jsonify(temas)
