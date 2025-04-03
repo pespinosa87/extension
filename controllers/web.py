@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request
 import datetime
-from models.medio import get_medio_stats
+from models.medio import get_medio_stats, get_all_medios
 from models.tema import get_temas, get_tema_stats
 from config import Config
 
