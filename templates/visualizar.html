@@ -30,6 +30,17 @@
         <h2>Temas monitoreados</h2>
         <small>Última actualización: {{ timestamp }}</small>
     </div>
+    <div style="margin: 20px 0;">
+        <label for="filtroMedio"><strong>Filtrar por medio:</strong></label>
+        <select id="filtroMedio">
+            <option value="">Todos</option>
+            {% for medio in medios %}
+                <option value="{{ medio.id }}" {% if medio_seleccionado == medio.id %}selected{% endif %}>
+                    {{ medio.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
     
     <table>
         <thead>
@@ -63,7 +74,16 @@
             {% endif %}
         </tbody>
     </table>
-
+    <div style="margin-top: 20px; text-align: center;">
+        {% if page > 1 %}
+            <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, page=page-1) }}">← Anterior</a>
+        {% endif %}
+        <span style="margin: 0 10px;">Página {{ page }}</span>
+        {% if temas|length >= 20 %}
+            <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, page=page+1) }}">Siguiente →</a>
+        {% endif %}
+    </div>
+    
     <script>
         document.getElementById('btnCargarMedios').addEventListener('click', function() {
             window.location.href = "{{ url_for('api.agregar_medios_prensa_endpoint') }}";
@@ -73,4 +93,11 @@
             window.location.href = "{{ url_for('web.visualizar_temas') }}";
         });
     </script>
+    <script>
+        document.getElementById('filtroMedio').addEventListener('change', function() {
+            const medioId = this.value;
+            window.location.href = medioId ? `?medio_id=${medioId}` : `?`;
+        });
+    </script>
+    
 {% endblock %}

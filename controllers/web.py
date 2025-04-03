@@ -12,17 +12,27 @@ def index():
 
 @web_bp.route('/visualizar')
 def visualizar_temas():
+    medio_id = request.args.get('medio_id', type=int)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
     medios_stats = get_medio_stats()
     temas_stats = get_tema_stats()
-    temas = get_temas()
-    
+    temas = get_temas(limit=per_page, offset=offset, medio_id=medio_id)
+    todos_los_medios = get_all_medios()
+
     return render_template(
         'visualizar.html',
         temas=temas,
         medios_stats=medios_stats,
         temas_stats=temas_stats,
-        timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        medios=todos_los_medios,
+        medio_seleccionado=medio_id,
+        page=page
     )
+
 
 @web_bp.route('/health')
 def health_check():

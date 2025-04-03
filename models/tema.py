@@ -37,7 +37,7 @@ def add_or_update_tema(medio_id, nombre, url, primera_vez=None, ultima_vez=None)
     conn.commit()
     conn.close()
 
-def get_temas(tipo_medio='todos', limit=100):
+def get_temas(tipo_medio='todos', medio_id=None, limit=100, offset=0):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -48,14 +48,23 @@ def get_temas(tipo_medio='todos', limit=100):
     JOIN medios m ON t.medio_id = m.id
     """
     
-    params = ()
+    condiciones = []
+    params = []
+
     if tipo_medio != 'todos':
-        query += " WHERE m.tipo = ?"
-        params = (tipo_medio,)
+        condiciones.append("m.tipo = ?")
+        params.append(tipo_medio)
     
-    query += " ORDER BY t.ultima_vez DESC LIMIT ?"
-    params = params + (limit,)
-    
+    if medio_id:
+        condiciones.append("m.id = ?")
+        params.append(medio_id)
+
+    if condiciones:
+        query += " WHERE " + " AND ".join(condiciones)
+
+    query += " ORDER BY t.ultima_vez DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+
     cursor.execute(query, params)
     rows = cursor.fetchall()
     
@@ -65,10 +74,8 @@ def get_temas(tipo_medio='todos', limit=100):
         ultima_vez = datetime.datetime.fromisoformat(row['ultima_vez'])
         ahora = datetime.datetime.now()
         
-        # Calcular duración en horas
         duracion_horas = (ahora - primera_vez).total_seconds() / 3600
         
-        # Determinar estado según duración
         if duracion_horas < 4:
             estado = "verde"
             color = "#4caf50"
@@ -96,6 +103,7 @@ def get_temas(tipo_medio='todos', limit=100):
     
     conn.close()
     return temas
+
 
 def get_tema_stats():
     conn = get_db_connection()
