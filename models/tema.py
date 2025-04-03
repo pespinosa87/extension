@@ -116,7 +116,8 @@ def get_temas_por_dominio(dominio):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    print(f"[API] Buscando temas para dominio: {dominio}")
+    dominio = dominio.lower().replace("www.", "")
+    print(f"[API] Filtrando temas por dominio: {dominio}")
 
     query = """
     SELECT t.nombre, t.url, t.ultima_vez, t.primera_vez, 
@@ -124,19 +125,13 @@ def get_temas_por_dominio(dominio):
            m.tipo as medio_tipo
     FROM temas t
     JOIN medios m ON t.medio_id = m.id
-    WHERE m.url ILIKE %s OR m.url ILIKE %s OR m.url ILIKE %s
+    WHERE m.url ILIKE %s
     ORDER BY t.ultima_vez DESC
     """
 
-    # Probar diferentes variantes para asegurar coincidencia
-    dominio_limpio = dominio.replace("www.", "")
-    variantes = [
-        f"%{dominio}%",                # informacion.es
-        f"%www.{dominio}%",            # www.informacion.es
-        f"%https://{dominio}%"         # https://www.informacion.es
-    ]
-
-    cursor.execute(query, variantes)
+    # Buscar cualquier medio que contenga ese dominio
+    patron = f"%{dominio}%"
+    cursor.execute(query, (patron,))
     rows = cursor.fetchall()
     conn.close()
 
@@ -161,4 +156,5 @@ def get_temas_por_dominio(dominio):
         })
 
     return temas
+
 
