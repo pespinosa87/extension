@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monitor de Temas Digitales</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 800px;
+      max-height: 600px;
+      overflow-y: auto;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    
+    .header {
+      background-color: #4285f4;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .tabs {
+      display: flex;
+      background-color: #e0e0e0;
+      border-bottom: 1px solid #ccc;
+    }
+    
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-right: 1px solid #ccc;
+    }
+    
+    .tab.active {
+      background-color: white;
+      border-bottom: 2px solid #4285f4;
+    }
+    
+    .content {
+      padding: 15px;
+      background-color: white;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-right: 5px;
+      font-size: 0.8em;
+      color: white;
+    }
+    
+    .verde {
+      background-color: #4caf50;
+    }
+    
+    .amarillo {
+      background-color: #ffc107;
+      color: black;
+    }
+    
+    .rojo {
+      background-color: #f44336;
+    }
+    
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 4px solid #3498db;
+      width: 20px;
+      height: 20px;
+      animation: spin 2s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      color: red;
+      padding: 10px;
+      text-align: center;
+    }
+    
+    .settings {
+      margin-top: 10px;
+    }
+    
+    .settings label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .settings input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    
+    .settings button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    
+    .refresh-button {
+      background-color: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>Monitor de Temas Digitales</h2>
+    <button id="refreshButton" class="refresh-button">🔄 Actualizar</button>
+  </div>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="propios">Medios Propios</div>
+    <div class="tab" data-tab="competencia">Competencia</div>
+    <div class="tab" data-tab="todos">Todos</div>
+    <div class="tab" data-tab="config">Configuración</div>
+  </div>
+  
+  <div class="content">
+    <div id="propiosContent" class="tab-content">
+      <div class="table-container" id="propiosTable">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <div id="competenciaContent" class="tab-content" style="display: none;">
+      <div class="table-container" id="competenciaTable">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <div id="todosContent" class="tab-content" style="display: none;">
+      <div class="table-container" id="todosTable">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <div id="configContent" class="tab-content" style="display: none;">
+      <div class="settings">
+        <h3>Configuración de la API</h3>
+        <label for="apiUrl">URL de la API:</label>
+        <input type="text" id="apiUrl" placeholder="https://tu-app.onrender.com/api">
+        
+        <h3>Agregar nuevo medio</h3>
+        <label for="medioNombre">Nombre:</label>
+        <input type="text" id="medioNombre" placeholder="Nombre del medio">
+        
+        <label for="medioUrl">URL:</label>
+        <input type="text" id="medioUrl" placeholder="https://www.example.com">
+        
+        <label for="medioTipo">Tipo:</label>
+        <select id="medioTipo">
+          <option value="propio">Propio</option>
+          <option value="competencia">Competencia</option>
+        </select>
+        
+        <button id="agregarMedio">Agregar Medio</button>
+        
+        <div id="resultadoAgregar"></div>
+        
+        <h3>Escaneo Manual</h3>
+        <button id="escaneoManual">Iniciar Escaneo Manual</button>
+        <div id="resultadoEscaneo"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
