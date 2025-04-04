@@ -11,29 +11,42 @@ SELECTORES_POR_DOMINIO = {
     "elperiodico.com": ".ft-org-header-nav__list",
 }
 
-def extraer_temas_visibles(html, dominio):
-    soup = BeautifulSoup(html, "html.parser")
-    selector = SELECTORES_POR_DOMINIO.get(dominio, None)
+def extraer_temas_visibles(html, dominio_original):
+    # Normalizar dominio
+    dominio = dominio_original.lower().replace("www.", "").replace("/es", "").strip()
+    selector = SELECTORES_POR_DOMINIO.get(dominio)
+
+    print(f"🌐 Dominio recibido: {dominio_original}")
+    print(f"🔍 Dominio normalizado: {dominio}")
+    print(f"🧩 Selector usado: {selector}")
 
     temas = []
+    soup = BeautifulSoup(html, "html.parser")
 
     if selector:
         contenedor = soup.select_one(selector)
-        if contenedor:
+        if not contenedor:
+            print("⚠️ No se encontró el contenedor para ese selector.")
+        else:
             enlaces = contenedor.find_all("a")
             for i, link in enumerate(enlaces):
                 texto = link.get_text(strip=True)
                 href = link.get("href")
 
+                # Excluir el primer elemento en elperiodico.com ("Es noticia")
                 if dominio == "elperiodico.com" and i == 0:
-                    continue  # ignorar "Es noticia"
+                    continue
 
                 if texto and href and len(texto) < 50:
                     temas.append({
                         "nombre": texto,
-                        "url": href if href.startswith("http") else f"https://{dominio}{href}"
+                        "url": href if href.startswith("http") else f"https://{dominio_original}{href}"
                     })
+    else:
+        print("❌ No se encontró selector para este dominio")
+
     return temas
+
 
 
 def get_db_connection():
