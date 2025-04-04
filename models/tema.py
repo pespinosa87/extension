@@ -17,8 +17,8 @@ def extraer_temas_visibles(html, url):
     import logging
 
     parsed = urllib.parse.urlparse(url)
-    hostname = parsed.hostname or ""
-    dominio = hostname.replace("www.", "").lower().replace("/es", "").strip()
+    dominio = hostname.replace("www.", "").lower()
+
 
     selector = None
     for clave in SELECTORES_POR_DOMINIO:
