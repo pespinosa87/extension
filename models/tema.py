@@ -3,6 +3,38 @@ import psycopg2.extras
 import datetime
 import urllib.parse
 from config import Config
+from bs4 import BeautifulSoup
+
+SELECTORES_POR_DOMINIO = {
+    "sport.es": ".news",
+    "epe.es": ".ft-org-header-sidenav-body-header-nav",
+    "elperiodico.com": ".ft-org-header-nav__list",
+}
+
+def extraer_temas_visibles(html, dominio):
+    soup = BeautifulSoup(html, "html.parser")
+    selector = SELECTORES_POR_DOMINIO.get(dominio, None)
+
+    temas = []
+
+    if selector:
+        contenedor = soup.select_one(selector)
+        if contenedor:
+            enlaces = contenedor.find_all("a")
+            for i, link in enumerate(enlaces):
+                texto = link.get_text(strip=True)
+                href = link.get("href")
+
+                if dominio == "elperiodico.com" and i == 0:
+                    continue  # ignorar "Es noticia"
+
+                if texto and href and len(texto) < 50:
+                    temas.append({
+                        "nombre": texto,
+                        "url": href if href.startswith("http") else f"https://{dominio}{href}"
+                    })
+    return temas
+
 
 def get_db_connection():
     conn = psycopg2.connect(Config.DATABASE)
