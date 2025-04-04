@@ -11,41 +11,44 @@ SELECTORES_POR_DOMINIO = {
     "elperiodico.com": ".ft-org-header-nav__list",
 }
 
-def extraer_temas_visibles(html, dominio_original):
-    # Normalizar dominio
-    dominio = dominio_original.lower().replace("www.", "").replace("/es", "").strip()
-    selector = SELECTORES_POR_DOMINIO.get(dominio)
+def extraer_temas_visibles(html, url):
+    from bs4 import BeautifulSoup
+    import urllib.parse
+    import logging
 
-    print(f"🌐 Dominio recibido: {dominio_original}")
-    print(f"🔍 Dominio normalizado: {dominio}")
-    print(f"🧩 Selector usado: {selector}")
+    parsed = urllib.parse.urlparse(url)
+    hostname = parsed.hostname or ""
+    dominio = hostname.replace("www.", "").lower().replace("/es", "").strip()
+
+    selector = None
+    for clave in SELECTORES_POR_DOMINIO:
+        if clave in dominio:
+            selector = SELECTORES_POR_DOMINIO[clave]
+            break
+
+    logging.info(f"[Extractor] Dominio base detectado: {dominio} → usando selector: {selector}")
 
     temas = []
     soup = BeautifulSoup(html, "html.parser")
 
     if selector:
         contenedor = soup.select_one(selector)
-        if not contenedor:
-            print("⚠️ No se encontró el contenedor para ese selector.")
-        else:
+        if contenedor:
             enlaces = contenedor.find_all("a")
             for i, link in enumerate(enlaces):
                 texto = link.get_text(strip=True)
                 href = link.get("href")
 
-                # Excluir el primer elemento en elperiodico.com ("Es noticia")
-                if dominio == "elperiodico.com" and i == 0:
-                    continue
+                if "elperiodico.com" in dominio and i == 0:
+                    continue  # Ignorar "Es noticia"
 
                 if texto and href and len(texto) < 50:
                     temas.append({
                         "nombre": texto,
-                        "url": href if href.startswith("http") else f"https://{dominio_original}{href}"
+                        "url": href if href.startswith("http") else f"https://{hostname}{href}"
                     })
-    else:
-        print("❌ No se encontró selector para este dominio")
-
     return temas
+
 
 
 
