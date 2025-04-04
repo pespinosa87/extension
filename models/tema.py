@@ -16,19 +16,16 @@ def extraer_temas_visibles(html, url):
     import urllib.parse
     import logging
 
-    try:
-        parsed = urllib.parse.urlparse(url)
-        hostname = parsed.hostname or ""
-    except Exception as e:
-        import logging
-        logging.error(f"[Extractor] Error al parsear URL: {url} → {e}")
+    parsed = urllib.parse.urlparse(url)
+    hostname = parsed.hostname
+
+    if not hostname:
+        logging.error(f"[Extractor] No se pudo obtener el hostname desde la URL: {url}")
         return []
 
     dominio = hostname.replace("www.", "").lower()
-
-
-
     selector = None
+
     for clave in SELECTORES_POR_DOMINIO:
         if clave in dominio:
             selector = SELECTORES_POR_DOMINIO[clave]
@@ -55,7 +52,9 @@ def extraer_temas_visibles(html, url):
                         "nombre": texto,
                         "url": href if href.startswith("http") else f"https://{hostname}{href}"
                     })
+
     return temas
+
 
 
 
