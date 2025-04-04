@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
 from models.tema import get_temas_visualizacion
-from models.medio import get_all_medios, get_medios_stats
+from models.medio import get_all_medios
 import datetime
 
 web_bp = Blueprint('web', __name__)

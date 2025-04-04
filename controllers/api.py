@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify
 from models.medio import get_all_medios, add_medio
+<<<<<<< HEAD
 from models.tema import get_temas, get_temas_por_dominio
+=======
+from models.tema import get_temas_visualizacion as get_temas, get_temas_por_dominio
+>>>>>>> 6068be7 (Primer commit desde nuevo ordenador)
 from services.scanner import escanear_medios_por_lotes as escanear_todos_los_medios, agregar_medios_prensa
 from threading import Thread
 
