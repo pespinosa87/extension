@@ -133,10 +133,17 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
     return temas, medios, {"temas": {"total": total_temas}, "medios": medios_stats}
 
 def get_temas_por_dominio(dominio):
+    def normalizar_dominio(dominio_url):
+        parsed = urllib.parse.urlparse(dominio_url)
+        hostname = parsed.hostname or dominio_url
+        dominio_limpio = hostname.replace("www.", "").lower()
+        return dominio_limpio
+
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    dominio = dominio.lower().replace("www.", "")
+    dominio_limpio = normalizar_dominio(dominio)
+
     query = """
     SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez,
            m.nombre as medio_nombre, m.url as medio_url, m.tipo as medio_tipo, m.id as medio_id
@@ -151,9 +158,12 @@ def get_temas_por_dominio(dominio):
 
     ahora = datetime.datetime.now()
     temas = []
+
     for row in rows:
-        hostname = urllib.parse.urlparse(row['medio_url']).hostname or ""
-        if dominio not in hostname.replace("www.", "").lower():
+        medio_hostname = urllib.parse.urlparse(row['medio_url']).hostname or ""
+        medio_limpio = medio_hostname.replace("www.", "").lower()
+
+        if dominio_limpio not in medio_limpio:
             continue
 
         duracion_horas = (ahora - row['primera_vez']).total_seconds() / 3600
