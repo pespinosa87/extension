@@ -12,49 +12,61 @@ SELECTORES_POR_DOMINIO = {
 }
 
 def extraer_temas_visibles(html, url):
-    from bs4 import BeautifulSoup
     import urllib.parse
     import logging
+    from bs4 import BeautifulSoup
 
-    parsed = urllib.parse.urlparse(url)
-    hostname = parsed.hostname or ""
-
-    if not hostname:
-        logging.error(f"[Extractor] No se pudo obtener el hostname desde la URL: {url}")
+    if not url:
+        logging.error("[Extractor] La URL es vacía o None.")
         return []
 
-    dominio = hostname.replace("www.", "").lower()
+    try:
+        parsed = urllib.parse.urlparse(url)
+        hostname = parsed.hostname or ""
+        if not hostname:
+            logging.error(f"[Extractor] No se pudo extraer hostname desde la URL: {url}")
+            return []
 
-    selector = None
+        dominio = hostname.replace("www.", "").lower()
+        selector = None
 
-    for clave in SELECTORES_POR_DOMINIO:
-        if clave in dominio:
-            selector = SELECTORES_POR_DOMINIO[clave]
-            break
+        for clave in SELECTORES_POR_DOMINIO:
+            if clave in dominio:
+                selector = SELECTORES_POR_DOMINIO[clave]
+                break
 
-    logging.info(f"[Extractor] Dominio base detectado: {dominio} → usando selector: {selector}")
+        logging.info(f"[Extractor] Dominio detectado: {dominio} → usando selector: {selector}")
 
-    temas = []
-    soup = BeautifulSoup(html, "html.parser")
+        temas = []
+        soup = BeautifulSoup(html, "html.parser")
 
-    if selector:
-        contenedor = soup.select_one(selector)
-        if contenedor:
-            enlaces = contenedor.find_all("a")
-            for i, link in enumerate(enlaces):
-                texto = link.get_text(strip=True)
-                href = link.get("href")
+        if selector:
+            contenedor = soup.select_one(selector)
+            if contenedor:
+                enlaces = contenedor.find_all("a")
+                for i, link in enumerate(enlaces):
+                    texto = link.get_text(strip=True)
+                    href = link.get("href")
 
-                if "elperiodico.com" in dominio and i == 0:
-                    continue  # Ignorar "Es noticia"
+                    if "elperiodico.com" in dominio and i == 0:
+                        continue  # Ignorar "Es noticia"
 
-                if texto and href and len(texto) < 50:
-                    temas.append({
-                        "nombre": texto,
-                        "url": href if href.startswith("http") else f"https://{hostname}{href}"
-                    })
+                    if texto and href and len(texto) < 50:
+                        temas.append({
+                            "nombre": texto,
+                            "url": href if href.startswith("http") else f"https://{hostname}{href}"
+                        })
+            else:
+                logging.warning(f"[Extractor] Selector '{selector}' no encontrado en el HTML.")
+        else:
+            logging.warning(f"[Extractor] No hay selector definido para el dominio: {dominio}")
 
-    return temas
+        return temas
+
+    except Exception as e:
+        logging.exception(f"[Extractor] Excepción inesperada al procesar la URL: {url} → {e}")
+        return []
+
 
 
 
