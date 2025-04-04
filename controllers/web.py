@@ -13,20 +13,25 @@ def index():
 def health_check():
     return "OK"
 
-@web_bp.route('/visualizar')
+@web_bp.route("/visualizar/")
 def visualizar_temas():
     medio_id = request.args.get("medio_id", type=int)
-    tipo_medio = request.args.get("tipo", default="")
+    tipo = request.args.get("tipo", default="", type=str)
     page = request.args.get("page", default=1, type=int)
 
-    temas, medios, stats = get_temas_visualizacion(medio_id, tipo_medio, page=page)
+    temas, medios, stats = get_temas_visualizacion(
+        medio_id=medio_id,
+        tipo_medio=tipo if tipo != "todos" else "",
+        page=page
+    )
 
-    return render_template("visualizar.html",
-                           temas=temas,
-                           medios=medios,
-                           medios_stats=stats["medios"],
-                           temas_stats=stats["temas"],
-                           medio_seleccionado=medio_id,
-                           tipo_medio=tipo_medio,
-                           timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           page=page)
+    return render_template(
+        "visualizar.html",
+        temas=temas,
+        medios=medios,
+        medios_stats=stats["medios"],
+        temas_stats=stats["temas"],
+        page=page,
+        medio_seleccionado=medio_id,
+        tipo_seleccionado=tipo
+    )
