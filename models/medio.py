@@ -36,7 +36,7 @@ def add_medio(nombre, url, tipo):
         return {"mensaje": f"Error inesperado: {str(e)}"}, 500
 
 
-def get_medio_stats():
+def get_medios_stats():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
