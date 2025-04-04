@@ -16,8 +16,16 @@ def extraer_temas_visibles(html, url):
     import urllib.parse
     import logging
 
-    parsed = urllib.parse.urlparse(url)
+    try:
+        parsed = urllib.parse.urlparse(url)
+        hostname = parsed.hostname or ""
+    except Exception as e:
+        import logging
+        logging.error(f"[Extractor] Error al parsear URL: {url} → {e}")
+        return []
+
     dominio = hostname.replace("www.", "").lower()
+
 
 
     selector = None
