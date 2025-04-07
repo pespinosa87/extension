@@ -49,74 +49,73 @@ def limpiar_temas_antiguos(dias_historico=7):
     except Exception as e:
         logger.error(f"Error al limpiar temas antiguos: {e}")
 
+TEMAS_INVALIDOS = {"es noticia", "últimas noticias", "todas las noticias", "más leídas", "tendencias"}
+
 def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout=15):
-    """
-    Extrae los temas y URLs del sitio web utilizando el selector CSS específico.
-    """
     try:
-        # Configurar headers para simular un navegador real
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        
+
         logger.info(f"Obteniendo contenido de {url}...")
         response = requests.get(url, headers=headers, timeout=timeout)
         response.raise_for_status()
-        
-        # Si no se proporciona selector, obtener el selector predeterminado
+
+        # 1. Buscar selector del medio en DB si no se pasó manualmente
+        if not selector_temas:
+            conn = get_db_connection()
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute("SELECT selector FROM medios WHERE id = %s", (medio_id,))
+            medio = cursor.fetchone()
+            conn.close()
+            if medio and medio["selector"]:
+                selector_temas = medio["selector"]
+
+        # 2. Si sigue sin selector, usar los de fallback
         if not selector_temas:
             if tipo_medio == 'propio':
-                # Selectores para diferentes tipos de medios
                 selectors_propios = [
                     ".ft-org-header-regionales-menu-panel__tagbar a",
                     ".tags a",
                     ".tag-list a",
                     "a.tag"
                 ]
-                
-                # Probar múltiples selectores
                 for selector in selectors_propios:
-                    temas_elementos = BeautifulSoup(response.text, 'html.parser').select(selector)
-                    if temas_elementos:
+                    elementos = BeautifulSoup(response.text, 'html.parser').select(selector)
+                    if elementos:
                         selector_temas = selector
                         break
             else:
-                # Para competencia, selectores genéricos
                 selector_temas = "a.tag, a.tema, .tags a, .tag-list a"
-        
+
         logger.info(f"Usando selector: {selector_temas}")
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Extraer temas
         temas_elementos = soup.select(selector_temas)
         logger.info(f"Encontrados {len(temas_elementos)} elementos con el selector")
-        
+
         temas = []
-        for elemento in temas_elementos:
+        base_url = '/'.join(url.split('/')[:3])
+
+        for i, elemento in enumerate(temas_elementos):
             nombre = elemento.text.strip()
+            if not nombre or nombre.lower() in TEMAS_INVALIDOS:
+                continue
+
             url_tema = elemento.get('href', '')
-
             if not url_tema:
-                 continue 
+                continue
             if not url_tema.startswith(('http://', 'https://')):
-                 base_url = '/'.join(url.split('/')[:3])
-                 url_tema = f"{base_url}{url_tema if url_tema.startswith('/') else '/' + url_tema}"
-
-            
-            # Si la URL es relativa, convertirla a absoluta
-            if url_tema and not url_tema.startswith(('http://', 'https://')):
-                base_url = '/'.join(url.split('/')[:3])  # Extraer dominio
                 url_tema = f"{base_url}{url_tema if url_tema.startswith('/') else '/' + url_tema}"
-            
-            if nombre and url_tema:  # Solo agregar si tiene nombre y URL
-                temas.append((nombre, url_tema))
-                logger.info(f"Tema encontrado: {nombre} -> {url_tema}")
-        
+
+            temas.append((nombre, url_tema))
+            logger.info(f"Tema encontrado: {nombre} -> {url_tema}")
+
         return temas
-    
+
     except Exception as e:
         logger.error(f"Error al obtener temas de {url}: {str(e)}")
         return []
+
 
 def escanear_medios_por_lotes(lote_size=5):
     """Función para escanear medios en lotes"""

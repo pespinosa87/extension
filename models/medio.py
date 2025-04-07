@@ -14,13 +14,13 @@ def get_all_medios():
     conn.close()
     return medios
 
-def add_medio(nombre, url, tipo):
+def add_medio(nombre, url, tipo, selector=None):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO medios (nombre, url, tipo) VALUES (%s, %s, %s)",
-            (nombre, url, tipo)
+            "INSERT INTO medios (nombre, url, tipo, selector) VALUES (%s, %s, %s, %s)",
+            (nombre, url, tipo, selector)
         )
         conn.commit()
         conn.close()

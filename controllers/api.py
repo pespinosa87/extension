@@ -17,7 +17,8 @@ def agregar_medio():
     if not data or 'nombre' not in data or 'url' not in data or 'tipo' not in data:
         return jsonify({'error': 'Datos incompletos'}), 400
     
-    return add_medio(data['nombre'], data['url'], data['tipo'])
+    selector = data.get('selector')
+    return add_medio(data['nombre'], data['url'], data['tipo'], selector)
 
 @api_bp.route('/temas', methods=['GET'])
 def obtener_temas_flexibles():
