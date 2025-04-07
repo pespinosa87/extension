@@ -202,14 +202,17 @@
     document.getElementById('filtroTipo').addEventListener('change', actualizarFiltros);
 
     function actualizarFiltros() {
-        const medioId = document.getElementById('filtroMedio').value;
-        const tipo = document.getElementById('filtroTipo').value;
+    const medioId = document.getElementById('filtroMedio').value;
+    const tipo = document.getElementById('filtroTipo').value;
+    const visible = document.getElementById('filtroVisible').value;
 
-        let query = '?';
-        if (medioId) query += `medio_id=${medioId}&`;
-        if (tipo) query += `tipo=${tipo}`;
-        window.location.href = query;
-    }
+    let query = '?';
+    if (medioId) query += `medio_id=${medioId}&`;
+    if (tipo) query += `tipo=${tipo}&`;
+    if (visible) query += `visible=${visible}&`;
+    window.location.href = query;
+}
+
 </script>
 
 {% endblock %}
