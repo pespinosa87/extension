@@ -233,3 +233,19 @@ def init_scheduler():
     
     logger.info("Scheduler inicializado correctamente")
     return scheduler
+
+from models.competidor import get_competidores_por_medio_padre
+
+
+def escanear_competidores_por_lotes():
+    propios = [m for m in get_all_medios() if m['tipo'] == 'propio']
+    total = 0
+    for medio in propios:
+        competidores = get_competidores_por_medio_padre(medio['id'])
+        for c in competidores:
+            temas = obtener_temas_de_web(c['id'], c['url'], c['tipo'])
+            for nombre, url in temas:
+                add_or_update_tema(c['id'], nombre, url)
+                total += 1
+    logger.info(f"Escaneo de competidores completado. Temas encontrados: {total}")
+    return {"temas_encontrados": total}

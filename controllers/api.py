@@ -71,3 +71,14 @@ def agregar_medios_iniciales():
     return jsonify({
         'mensaje': f'Proceso completado. Medios agregados: {medios_agregados}, ya existentes: {medios_existentes}'
     }), 200
+
+from models.competidor import add_competidor
+
+@api_bp.route('/competidores', methods=['POST'])
+def agregar_competidor():
+    data = request.json
+    if not data or 'medio_competidor_id' not in data or 'medio_padre_id' not in data:
+        return jsonify({'error': 'Datos incompletos'}), 400
+
+    add_competidor(data['medio_competidor_id'], data['medio_padre_id'])
+    return jsonify({'mensaje': 'Competidor vinculado correctamente'})

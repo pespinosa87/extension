@@ -21,9 +21,11 @@
 </div>
 
 <div class="actions">
-    <button id="btnEscaneoManual">Iniciar escaneo manual</button>
+    <button id="btnEscaneoManual">Escanear medios propios</button>
     <button id="btnCargarMedios">Cargar medios de prensa</button>
     <button id="btnActualizar">Actualizar página</button>
+    <button id="btnEscanearCompetidores" style="background-color: #9c27b0">Escanear competidores</button>
+    <button id="btnNuevoCompetidor" style="background-color: #ff5722">Añadir competidor</button>
 </div>
 
 <div class="refresh">
@@ -94,6 +96,58 @@
         <a href="{{ url_for('web.visualizar_temas', medio_id=medio_seleccionado, tipo=tipo_seleccionado, page=page+1) }}">Siguiente →</a>
     {% endif %}
 </div>
+<div id="popupCompetidor" style="display:none; background:white; padding:20px; border:1px solid #ccc; position:fixed; top:20%; left:30%; z-index:999">
+    <h3>Nuevo competidor</h3>
+    <label>Selecciona medio propio:</label>
+    <select id="selectPadre">
+      {% for medio in medios if medio.tipo == 'propio' %}
+        <option value="{{ medio.id }}">{{ medio.nombre }}</option>
+      {% endfor %}
+    </select><br><br>
+    <label>Selecciona medio competidor:</label>
+    <select id="selectCompetidor">
+      {% for medio in medios if medio.tipo == 'competencia' %}
+        <option value="{{ medio.id }}">{{ medio.nombre }}</option>
+      {% endfor %}
+    </select><br><br>
+    <button onclick="guardarCompetidor()">Guardar</button>
+    <button onclick="document.getElementById('popupCompetidor').style.display='none'">Cerrar</button>
+  </div>
+  
+  <script>
+  document.getElementById('btnNuevoCompetidor').onclick = () => {
+    document.getElementById('popupCompetidor').style.display = 'block';
+  };
+  
+  document.getElementById('btnEscanearCompetidores').onclick = () => {
+    fetch('/api/iniciar-escaneo-competidores', { method: 'POST' })
+      .then(res => res.json()).then(data => alert(data.mensaje || 'OK'));
+  };
+  
+  function guardarCompetidor() {
+    const medio_competidor_id = document.getElementById('selectCompetidor').value;
+    const medio_padre_id = document.getElementById('selectPadre').value;
+    fetch('/api/competidores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medio_competidor_id, medio_padre_id })
+    }).then(res => res.json()).then(data => {
+      alert(data.mensaje);
+      document.getElementById('popupCompetidor').style.display = 'none';
+      location.reload();
+    });
+  }
+  </script>
+  
+  
+  # === NUEVO ENDPOINT: api.py para escaneo de competidores ===
+  @api_bp.route('/iniciar-escaneo-competidores', methods=['POST'])
+  def iniciar_escaneo_competidores():
+      def run_bg():
+          escanear_competidores_por_lotes()
+      Thread(target=run_bg).start()
+      return jsonify({"mensaje": "Escaneo de competidores en segundo plano"})
+  
 
 <script>
     document.getElementById('btnCargarMedios').addEventListener('click', function() {
