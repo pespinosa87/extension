@@ -5,6 +5,7 @@ import time
 import pytz
 import time
 import logging
+import psycopg2
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from models.medio import get_all_medios, add_medio
