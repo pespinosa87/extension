@@ -35,15 +35,13 @@
 
 <div style="margin: 20px 0;">
     <label for="filtroMedio"><strong>Filtrar por medio:</strong></label>
-    <select id="filtroMedio">
+    <select name="medio" id="filtroMedio">
         <option value="">Todos</option>
-        {% for medio in medios %}
-            <option value="{{ medio.id }}" {% if medio_seleccionado == medio.id %}selected{% endif %}>
-                {{ medio.nombre }}
-            </option>
+        {% for medio in medios if medio.tipo == 'propio' %}
+          <option value="{{ medio.id }}" {% if medio.id == medio_seleccionado %}selected{% endif %}>{{ medio.nombre }}</option>
         {% endfor %}
-    </select>
-
+      </select>
+      
     &nbsp;&nbsp;&nbsp;
 
     <label for="filtroTipo"><strong>Tipo de medio:</strong></label>
