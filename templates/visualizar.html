@@ -52,7 +52,7 @@
     </select>
     <select name="visible" id="filtroVisible">
         <option value="">Todos</option>
-        <option value="true" {% if visible == 'true' %}selected{% endif %}>Actualmente visibles</option>
+        <option value="true" {% if visible == 'true' %}selected{% endif %}>Visibles</option>
         <option value="false" {% if visible == 'false' %}selected{% endif %}>Históricos</option>
       </select>
 </div>
@@ -61,19 +61,18 @@
     <thead>
         <tr>
           <th>Nombre</th>
-          <th>URL</th>
           <th>Medio</th>
           <th>Tipo</th>
           <th>Primera vez</th>
           <th>Última vez</th>
           <th>Visible</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for tema in temas %}
         <tr>
           <td>{{ tema.nombre }}</td>
-          <td><a href="{{ tema.url }}" target="_blank">{{ tema.url }}</a></td>
           <td>{{ tema.medio_nombre }}</td>
           <td>{{ tema.medio_tipo }}</td>
           <td>{{ tema.primera_vez.strftime('%d/%m %H:%M') if tema.primera_vez }}</td>
@@ -85,9 +84,13 @@
               <span style="color:red">No</span>
             {% endif %}
           </td>
+          <td>
+            <a href="{{ tema.url }}" target="_blank" class="btn btn-sm btn-primary">Ver noticia</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
+      
       
 </table>
 
