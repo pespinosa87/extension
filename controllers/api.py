@@ -83,3 +83,12 @@ def agregar_competidor():
 
     add_competidor(data['medio_competidor_id'], data['medio_padre_id'])
     return jsonify({'mensaje': 'Competidor vinculado correctamente'})
+
+from services.scanner import escanear_competidores_por_lotes
+
+@api_bp.route('/iniciar-escaneo-competidores', methods=['POST'])
+def iniciar_escaneo_competidores():
+    def run_bg():
+        escanear_competidores_por_lotes()
+    Thread(target=run_bg).start()
+    return jsonify({"mensaje": "Escaneo de competidores en segundo plano"})
