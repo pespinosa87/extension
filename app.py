@@ -17,7 +17,6 @@ CORS(app)
 # Registrar blueprints
 app.register_blueprint(web_bp)
 app.register_blueprint(api_bp, url_prefix='/api')
-app.register_blueprint(api_bp)
 
 # Iniciar scheduler directamente (sin esperar a primera request)
 scheduler = init_scheduler()
