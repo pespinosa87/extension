@@ -3,13 +3,14 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 import pytz
-import time
 import logging
 import psycopg2
+import psycopg2.extras
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from models.tema import add_or_update_tema, get_db_connection, resetear_visibilidad_por_medio
 from models.medio import get_all_medios, add_medio
-from models.tema import add_or_update_tema, get_db_connection
+from models.competidor import get_competidores_por_medio_padre
 
 # Configurar logging
 logging.basicConfig(
@@ -23,29 +24,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def limpiar_temas_antiguos(dias_historico=7):
-    """
-    Elimina temas más antiguos, manteniendo 7 días completos de histórico
-    
-    Args:
-        dias_historico (int): Número de días de histórico a mantener
-    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # Calcular fecha límite (7 días completos de histórico)
         fecha_limite = datetime.datetime.now() - datetime.timedelta(days=dias_historico)
-        
-        # Eliminar temas más antiguos que la fecha límite
-        cursor.execute(
-            "DELETE FROM temas WHERE ultima_vez < ?", 
-            (fecha_limite.isoformat(),)
-        )
-        
+        cursor.execute("DELETE FROM temas WHERE ultima_vez < %s", (fecha_limite,))
         conn.commit()
-        rows_deleted = cursor.rowcount
-        logger.info(f"Limpieza de temas: Eliminados {rows_deleted} temas anteriores a {fecha_limite}")
-        
+        logger.info(f"Limpieza de temas: Eliminados {cursor.rowcount} temas anteriores a {fecha_limite}")
         conn.close()
     except Exception as e:
         logger.error(f"Error al limpiar temas antiguos: {e}")
@@ -57,12 +42,10 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-
         logger.info(f"Obteniendo contenido de {url}...")
         response = requests.get(url, headers=headers, timeout=timeout)
         response.raise_for_status()
 
-        # 1. Buscar selector del medio en DB si no se pasó manualmente
         if not selector_temas:
             conn = get_db_connection()
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -72,7 +55,6 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
             if medio and medio["selector"]:
                 selector_temas = medio["selector"]
 
-        # 2. Si sigue sin selector, usar los de fallback
         if not selector_temas:
             if tipo_medio == 'propio':
                 selectors_propios = [
@@ -92,27 +74,21 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
         logger.info(f"Usando selector: {selector_temas}")
         soup = BeautifulSoup(response.text, 'html.parser')
         contenedor = soup.select_one(selector_temas)
-        if contenedor:
-            temas_elementos = contenedor.find_all("a")
-        else:
-            temas_elementos = []
+        temas_elementos = contenedor.find_all("a") if contenedor else []
 
         logger.info(f"Encontrados {len(temas_elementos)} elementos con el selector")
-
         temas = []
         base_url = '/'.join(url.split('/')[:3])
 
-        for i, elemento in enumerate(temas_elementos):
+        for elemento in temas_elementos:
             nombre = elemento.text.strip()
             if not nombre or nombre.lower() in TEMAS_INVALIDOS:
                 continue
-
-            url_tema = elemento.get('href', '')
+            url_tema = elemento.get('href')
             if not url_tema:
                 continue
             if not url_tema.startswith(('http://', 'https://')):
                 url_tema = f"{base_url}{url_tema if url_tema.startswith('/') else '/' + url_tema}"
-
             temas.append((nombre, url_tema))
             logger.info(f"Tema encontrado: {nombre} -> {url_tema}")
 
@@ -122,53 +98,48 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
         logger.error(f"Error al obtener temas de {url}: {str(e)}")
         return []
 
-
 def escanear_medios_por_lotes(lote_size=5):
-    """Función para escanear medios en lotes"""
     logger.info(f"Iniciando escaneo a las {datetime.datetime.now()}")
-    
     medios = get_all_medios()
-    
     total_medios = len(medios)
     medios_procesados = 0
     temas_encontrados = 0
-    
+
     for i in range(0, total_medios, lote_size):
         lote_actual = medios[i:i+lote_size]
-        
         for medio in lote_actual:
             print(f"[{medios_procesados+1}/{total_medios}] Escaneando medio: {medio['nombre']} ({medio['url']}) - Tipo: {medio['tipo']}")
-            
-            # Obtener temas
+            resetear_visibilidad_por_medio(medio['id'])
             temas = obtener_temas_de_web(medio['id'], medio['url'], medio['tipo'])
-            
             if temas:
-                # Actualizar temas en la base de datos
                 for nombre, url in temas:
                     add_or_update_tema(medio['id'], nombre, url)
-                
                 temas_encontrados += len(temas)
                 print(f"✓ Encontrados {len(temas)} temas en {medio['nombre']}")
             else:
                 print(f"✗ No se encontraron temas en {medio['nombre']}")
-            
             medios_procesados += 1
             time.sleep(1.5)
-        
-        # Pequeña pausa entre lotes para no sobrecargar recursos
         time.sleep(2)
-    
-    print(f"Escaneo completado a las {datetime.datetime.now()}")
-    print(f"Resumen: {medios_procesados} medios procesados, {temas_encontrados} temas encontrados en total")
-    time.sleep(2)
-    return {
-        "medios_procesados": medios_procesados,
-        "temas_encontrados": temas_encontrados
-    }
+
+    logger.info(f"Escaneo completado. Medios: {medios_procesados}, Temas: {temas_encontrados}")
+    return {"medios_procesados": medios_procesados, "temas_encontrados": temas_encontrados}
+
+def escanear_competidores_por_lotes():
+    propios = [m for m in get_all_medios() if m['tipo'] == 'propio']
+    total = 0
+    for medio in propios:
+        competidores = get_competidores_por_medio_padre(medio['id'])
+        for c in competidores:
+            resetear_visibilidad_por_medio(c['id'])
+            temas = obtener_temas_de_web(c['id'], c['url'], c['tipo'])
+            for nombre, url in temas:
+                add_or_update_tema(c['id'], nombre, url)
+                total += 1
+    logger.info(f"Escaneo de competidores completado. Temas encontrados: {total}")
+    return {"temas_encontrados": total}
 
 def agregar_medios_prensa():
-    """Función para agregar los medios de prensa proporcionados"""
-    # Lista completa de medios propios
     medios_propios = [
         {"nombre": "Diari de Girona", "url": "https://www.diaridegirona.cat/", "tipo": "propio"},
         {"nombre": "Diario Córdoba", "url": "https://www.diariocordoba.com/", "tipo": "propio"},
@@ -194,63 +165,27 @@ def agregar_medios_prensa():
         {"nombre": "Superdeporte", "url": "https://www.superdeporte.es/", "tipo": "propio"},
         {"nombre": "El Correo Gallego", "url": "https://www.elcorreogallego.es/", "tipo": "propio"},
         {"nombre": "El Correo Web", "url": "https://www.elcorreoweb.es/", "tipo": "propio"},
-        {"nombre": "EPE", "url": "https://www.epe.es/es/", "tipo": "propio"},
-        {"nombre": "El Periódico", "url": "https://www.elperiodico.com/es/", "tipo": "propio"},
-        {"nombre": "Sport", "url": "https://www.sport.es/es/", "tipo": "propio"}
+        {"nombre": "EPE", "url": "https://www.epe.es/es/", "tipo": "propio", "selector": "ul.ft-org-header-sidenav-body-header-nav"},
+        {"nombre": "El Periódico", "url": "https://www.elperiodico.com/es/", "tipo": "propio", "selector": "ul.ft-org-header-nav__list"},
+        {"nombre": "Sport", "url": "https://www.sport.es/es/", "tipo": "propio", "selector": "ul.itemsContainer"}
     ]
-    
+
     medios_agregados = 0
     medios_existentes = 0
-    
+
     for medio in medios_propios:
-        resultado, status_code = add_medio(medio["nombre"], medio["url"], medio["tipo"])
+        resultado, status_code = add_medio(medio["nombre"], medio["url"], medio["tipo"], medio.get("selector"))
         if status_code == 201:
             medios_agregados += 1
         else:
             medios_existentes += 1
-    
+
     logger.info(f"Agregados {medios_agregados} medios nuevos, {medios_existentes} ya existentes")
-    
-    return {
-        "mensaje": f"Proceso completado. Medios agregados: {medios_agregados}, ya existentes: {medios_existentes}",
-    }
+    return {"mensaje": f"Proceso completado. Medios agregados: {medios_agregados}, ya existentes: {medios_existentes}"}
 
 def init_scheduler():
-    """Inicializar el programador de tareas"""
-    # Configurar el programador con zona horaria UTC
     scheduler = BackgroundScheduler(timezone=pytz.UTC)
-    
-    # Escanear todos los medios cada hora
-    scheduler.add_job(
-        escanear_medios_por_lotes, 
-        'interval', 
-        hours=1, 
-        id='escaneo_medios'
-    )
-    
-    # Limpiar temas antiguos cada 7 días, manteniendo 7 días de histórico
-    scheduler.add_job(
-        limpiar_temas_antiguos, 
-        'interval', 
-        days=7, 
-        id='limpiar_temas'
-    )
-    
+    scheduler.add_job(escanear_medios_por_lotes, 'interval', hours=1, id='escaneo_medios')
+    scheduler.add_job(limpiar_temas_antiguos, 'interval', days=7, id='limpiar_temas')
     logger.info("Scheduler inicializado correctamente")
     return scheduler
-
-from models.competidor import get_competidores_por_medio_padre
-
-
-def escanear_competidores_por_lotes():
-    propios = [m for m in get_all_medios() if m['tipo'] == 'propio']
-    total = 0
-    for medio in propios:
-        competidores = get_competidores_por_medio_padre(medio['id'])
-        for c in competidores:
-            temas = obtener_temas_de_web(c['id'], c['url'], c['tipo'])
-            for nombre, url in temas:
-                add_or_update_tema(c['id'], nombre, url)
-                total += 1
-    logger.info(f"Escaneo de competidores completado. Temas encontrados: {total}")
-    return {"temas_encontrados": total}

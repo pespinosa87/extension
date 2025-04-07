@@ -73,28 +73,38 @@ def extraer_temas_visibles(html, url):
 
 
 def get_db_connection():
-    conn = psycopg2.connect(Config.DATABASE)
-    return conn
+    return psycopg2.connect(Config.DATABASE)
 
-def add_or_update_tema(medio_id, nombre, url, primera_vez=None, ultima_vez=None):
+# Antes del escaneo por medio, resetear visibilidad
+def resetear_visibilidad_por_medio(medio_id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE temas SET visible = FALSE WHERE medio_id = %s", (medio_id,))
+    conn.commit()
+    conn.close()
 
-    cursor.execute(
-        "SELECT id, primera_vez FROM temas WHERE medio_id = %s AND nombre = %s AND url = %s",
-        (medio_id, nombre, url)
-    )
-    tema_existente = cursor.fetchone()
-    now = ultima_vez or datetime.datetime.now()
+# Agregar o actualizar tema
+def add_or_update_tema(medio_id, nombre, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id FROM temas
+        WHERE medio_id = %s AND nombre = %s AND url = %s
+    """, (medio_id, nombre, url))
+    row = cursor.fetchone()
 
-    if tema_existente:
-        cursor.execute("UPDATE temas SET ultima_vez = %s WHERE id = %s", (now, tema_existente['id']))
+    now = datetime.datetime.now()
+    if row:
+        cursor.execute("""
+            UPDATE temas
+            SET ultima_vez = %s, visible = TRUE
+            WHERE id = %s
+        """, (now, row[0]))
     else:
-        primera_vez = primera_vez or now
-        cursor.execute(
-            "INSERT INTO temas (medio_id, nombre, url, primera_vez, ultima_vez) VALUES (%s, %s, %s, %s, %s)",
-            (medio_id, nombre, url, primera_vez, now)
-        )
+        cursor.execute("""
+            INSERT INTO temas (medio_id, nombre, url, primera_vez, ultima_vez, visible)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+        """, (medio_id, nombre, url, now, now))
 
     conn.commit()
     conn.close()

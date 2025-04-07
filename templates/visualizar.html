@@ -50,6 +50,11 @@
         <option value="propio" {% if tipo_seleccionado == 'propio' %}selected{% endif %}>Propios</option>
         <option value="competencia" {% if tipo_seleccionado == 'competencia' %}selected{% endif %}>Competencia</option>
     </select>
+    <select name="visible" id="filtroVisible">
+        <option value="">Todos</option>
+        <option value="true" {% if visible == 'true' %}selected{% endif %}>Actualmente visibles</option>
+        <option value="false" {% if visible == 'false' %}selected{% endif %}>Históricos</option>
+      </select>
 </div>
 
 <table>
