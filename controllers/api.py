@@ -4,6 +4,8 @@ from models.tema import get_temas_por_dominio
 from services.scanner import escanear_medios_por_lotes as escanear_todos_los_medios, agregar_medios_prensa
 from threading import Thread
 from models.tema import get_db_connection
+import psycopg2
+import psycopg2.extras
 
 
 api_bp = Blueprint('api', __name__)
