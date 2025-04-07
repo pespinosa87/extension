@@ -98,7 +98,7 @@ def iniciar_escaneo_competidores():
 from flask import request, jsonify
 from models.competidor import get_competidores_relacionados
 
-@api_bp.route('/api/competidores-relacionados')
+@api_bp.route('/competidores-relacionados')
 def competidores_relacionados():
     dominio = request.args.get("dominio")
     if not dominio:
