@@ -91,7 +91,12 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
 
         logger.info(f"Usando selector: {selector_temas}")
         soup = BeautifulSoup(response.text, 'html.parser')
-        temas_elementos = soup.select(selector_temas)
+        contenedor = soup.select_one(selector_temas)
+        if contenedor:
+            temas_elementos = contenedor.find_all("a")
+        else:
+            temas_elementos = []
+
         logger.info(f"Encontrados {len(temas_elementos)} elementos con el selector")
 
         temas = []
