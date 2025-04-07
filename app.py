@@ -6,6 +6,9 @@ from config import Config
 from controllers.api import api_bp
 from controllers.web import web_bp
 from services.scanner import init_scheduler
+from controllers.api import api_bp
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -14,6 +17,7 @@ CORS(app)
 # Registrar blueprints
 app.register_blueprint(web_bp)
 app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(api_bp)
 
 # Iniciar scheduler directamente (sin esperar a primera request)
 scheduler = init_scheduler()

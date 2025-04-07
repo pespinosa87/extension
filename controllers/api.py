@@ -96,11 +96,32 @@ def iniciar_escaneo_competidores():
 from flask import request, jsonify
 from models.competidor import get_competidores_relacionados
 
-@api_bp.route("/api/competidores-relacionados")
-def obtener_competidores_relacionados():
+@api_bp.route('/api/competidores-relacionados')
+def competidores_relacionados():
     dominio = request.args.get("dominio")
     if not dominio:
+        return jsonify({"error": "Dominio requerido"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Buscar medio propio por dominio
+    cursor.execute("SELECT id FROM medios WHERE url ILIKE %s AND tipo = 'propio'", [f'%{dominio}%'])
+    medio = cursor.fetchone()
+
+    if not medio:
+        conn.close()
         return jsonify([])
 
-    return jsonify(get_competidores_relacionados(dominio))
+    # Obtener competidores asociados a ese medio propio
+    cursor.execute("""
+        SELECT m.id, m.nombre, m.url 
+        FROM competidores c 
+        JOIN medios m ON m.id = c.medio_competidor_id
+        WHERE c.medio_padre_id = %s
+    """, [medio['id']])
+    competidores = cursor.fetchall()
+    conn.close()
+    return jsonify(competidores)
+
 
