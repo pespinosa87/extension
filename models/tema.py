@@ -107,12 +107,43 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
     condiciones = []
     params = []
 
-    if tipo_medio:
+    ids_filtrados = []
+
+    # Si hay medio y tipo competencia → obtener sus competidores
+    if medio_id and tipo_medio == 'competencia':
+        cursor.execute("SELECT medio_competidor_id FROM competidores WHERE medio_padre_id = %s", (medio_id,))
+        rows = cursor.fetchall()
+        ids_filtrados = [row['medio_competidor_id'] for row in rows]
+        if not ids_filtrados:
+            ids_filtrados = [-1]  # Para que no devuelva nada si no hay competidores
+        condiciones.append("m.id = ANY(%s)")
+        params.append(ids_filtrados)
         condiciones.append("m.tipo = %s")
-        params.append(tipo_medio)
-    if medio_id:
-        condiciones.append("m.id = %s")
-        params.append(medio_id)
+        params.append('competencia')
+
+    # Si hay medio y tipo todos → mostrar propio + sus competidores
+    elif medio_id and tipo_medio == '':
+        cursor.execute("SELECT tipo FROM medios WHERE id = %s", (medio_id,))
+        tipo_base = cursor.fetchone()
+        if tipo_base and tipo_base["tipo"] == "propio":
+            cursor.execute("SELECT medio_competidor_id FROM competidores WHERE medio_padre_id = %s", (medio_id,))
+            rows = cursor.fetchall()
+            ids_competidores = [row['medio_competidor_id'] for row in rows]
+            ids_filtrados = [medio_id] + ids_competidores
+            condiciones.append("m.id = ANY(%s)")
+            params.append(ids_filtrados)
+        else:
+            condiciones.append("m.id = %s")
+            params.append(medio_id)
+
+    # Filtro clásico si no se cumple ningún caso especial
+    else:
+        if tipo_medio:
+            condiciones.append("m.tipo = %s")
+            params.append(tipo_medio)
+        if medio_id:
+            condiciones.append("m.id = %s")
+            params.append(medio_id)
 
     where_clause = " WHERE " + " AND ".join(condiciones) if condiciones else ""
 
@@ -167,6 +198,7 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
     conn.close()
 
     return temas, medios, {"temas": {"total": total_temas}, "medios": medios_stats}
+
 
 def get_temas_por_dominio(dominio):
     import re
