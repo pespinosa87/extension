@@ -109,7 +109,7 @@ def add_or_update_tema(medio_id, nombre, url):
     conn.commit()
     conn.close()
 
-def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
+def get_temas_visualizacion(medio_id=None, tipo_medio='', visible=None, page=1, per_page=20):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
@@ -119,19 +119,19 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
 
     ids_filtrados = []
 
-    # Si hay medio y tipo competencia → obtener sus competidores
+    # Medio + competencia → sólo sus competidores
     if medio_id and tipo_medio == 'competencia':
         cursor.execute("SELECT medio_competidor_id FROM competidores WHERE medio_padre_id = %s", (medio_id,))
         rows = cursor.fetchall()
         ids_filtrados = [row['medio_competidor_id'] for row in rows]
         if not ids_filtrados:
-            ids_filtrados = [-1]  # Para que no devuelva nada si no hay competidores
+            ids_filtrados = [-1]
         condiciones.append("m.id = ANY(%s)")
         params.append(ids_filtrados)
         condiciones.append("m.tipo = %s")
         params.append('competencia')
 
-    # Si hay medio y tipo todos → mostrar propio + sus competidores
+    # Medio + todos → propio + sus competidores
     elif medio_id and tipo_medio == '':
         cursor.execute("SELECT tipo FROM medios WHERE id = %s", (medio_id,))
         tipo_base = cursor.fetchone()
@@ -146,7 +146,6 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
             condiciones.append("m.id = %s")
             params.append(medio_id)
 
-    # Filtro clásico si no se cumple ningún caso especial
     else:
         if tipo_medio:
             condiciones.append("m.tipo = %s")
@@ -155,10 +154,15 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
             condiciones.append("m.id = %s")
             params.append(medio_id)
 
+    # 👁️ Filtro de visibilidad
+    if visible in ('true', 'false'):
+        condiciones.append("t.visible = %s")
+        params.append(visible == 'true')
+
     where_clause = " WHERE " + " AND ".join(condiciones) if condiciones else ""
 
     query = f"""
-    SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez,
+    SELECT t.id, t.nombre, t.url, t.primera_vez, t.ultima_vez, t.visible,
            m.nombre as medio_nombre, m.url as medio_url, m.tipo as medio_tipo, m.id as medio_id
     FROM temas t
     JOIN medios m ON t.medio_id = m.id
@@ -186,14 +190,15 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
             'id': row['id'],
             'nombre': row['nombre'],
             'url': row['url'],
-            'primera_vez': row['primera_vez'].strftime('%Y-%m-%d %H:%M:%S'),
-            'ultima_vez': row['ultima_vez'].strftime('%Y-%m-%d %H:%M:%S'),
+            'primera_vez': row['primera_vez'],
+            'ultima_vez': row['ultima_vez'],
             'medio_nombre': row['medio_nombre'],
             'medio_url': row['medio_url'],
             'medio_tipo': row['medio_tipo'],
             'medio_id': row['medio_id'],
             'duracion_horas': round(duracion_horas, 1),
-            'estado': estado
+            'estado': estado,
+            'visible': row['visible']
         })
 
     cursor.execute("SELECT id, nombre, tipo FROM medios ORDER BY nombre")
@@ -208,6 +213,7 @@ def get_temas_visualizacion(medio_id=None, tipo_medio='', page=1, per_page=20):
     conn.close()
 
     return temas, medios, {"temas": {"total": total_temas}, "medios": medios_stats}
+
 
 
 def get_temas_por_dominio(dominio):

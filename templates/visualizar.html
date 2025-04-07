@@ -60,34 +60,35 @@
 <table>
     <thead>
         <tr>
-            <th>Tema</th>
-            <th>Medio</th>
-            <th>Tipo</th>
-            <th>Tiempo</th>
-            <th>Estado</th>
-            <th>Última actualización</th>
-            <th>Acciones</th>
+          <th>Nombre</th>
+          <th>URL</th>
+          <th>Medio</th>
+          <th>Tipo</th>
+          <th>Primera vez</th>
+          <th>Última vez</th>
+          <th>Visible</th>
         </tr>
-    </thead>
-    <tbody>
-        {% if temas %}
-            {% for tema in temas %}
-                <tr>
-                    <td>{{ tema.nombre }}</td>
-                    <td><a href="{{ tema.medio_url }}" target="_blank">{{ tema.medio_nombre }}</a></td>
-                    <td>{{ tema.medio_tipo }}</td>
-                    <td>{{ tema.duracion_horas }} horas</td>
-                    <td><span class="tema-tag tema-{{ tema.estado }}">{{ tema.estado|upper }}</span></td>
-                    <td>{{ tema.ultima_vez }}</td>
-                    <td><a href="{{ tema.url }}" target="_blank">Ver noticia</a></td>
-                </tr>
-            {% endfor %}
-        {% else %}
-            <tr>
-                <td colspan="7" style="text-align: center;">No hay temas monitoreados aún.</td>
-            </tr>
-        {% endif %}
-    </tbody>
+      </thead>
+      <tbody>
+        {% for tema in temas %}
+        <tr>
+          <td>{{ tema.nombre }}</td>
+          <td><a href="{{ tema.url }}" target="_blank">{{ tema.url }}</a></td>
+          <td>{{ tema.medio_nombre }}</td>
+          <td>{{ tema.medio_tipo }}</td>
+          <td>{{ tema.primera_vez.strftime('%d/%m %H:%M') if tema.primera_vez }}</td>
+          <td>{{ tema.ultima_vez.strftime('%d/%m %H:%M') if tema.ultima_vez }}</td>
+          <td>
+            {% if tema.visible %}
+              <span style="color:green">Sí</span>
+            {% else %}
+              <span style="color:red">No</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      
 </table>
 
 <div style="margin-top: 20px; text-align: center;">
