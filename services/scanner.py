@@ -40,7 +40,12 @@ TEMAS_INVALIDOS = {"es noticia", "últimas noticias", "todas las noticias", "má
 def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout=15):
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "es-ES,es;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
         }
         logger.info(f"Obteniendo contenido de {url}...")
         response = requests.get(url, headers=headers, timeout=timeout)
@@ -73,8 +78,7 @@ def obtener_temas_de_web(medio_id, url, tipo_medio, selector_temas=None, timeout
 
         logger.info(f"Usando selector: {selector_temas}")
         soup = BeautifulSoup(response.text, 'html.parser')
-        contenedor = soup.select_one(selector_temas)
-        temas_elementos = contenedor.find_all("a") if contenedor else []
+        temas_elementos = soup.select(selector_temas)
 
         logger.info(f"Encontrados {len(temas_elementos)} elementos con el selector")
         temas = []
